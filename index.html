@@ -19,11 +19,12 @@ body{
 
 .container{
     background:white;
-    padding:25px;
+    padding:25px 30px 30px;
     border-radius:10px;
     box-shadow:0 10px 20px rgba(0,0,0,0.08);
     width:100%;
     max-width:420px;
+    box-sizing:border-box;
 }
 
 h2{
@@ -205,7 +206,7 @@ retryBtn.addEventListener("click", function(){
     }
 })
 
-const DEPLOY_URL = "https://script.google.com/macros/s/AKfycby0Q0fgQcx3JZShLePVzDvEr4iTVpWlu3GOoLYaDBrn_ahxaMljonOAt5FICclVRmgl9g/exec"
+const DEPLOY_URL = "https://script.google.com/macros/s/AKfycbyPkbQ8pPx9hFr6li3tPntz90Wjfs3RkOg1_EybwnXHRNwIxSEB7XseJoVpLqXFULmw-Q/exec"
 
 async function submitForm(payload){
     setLoading(true)
