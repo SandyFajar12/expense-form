@@ -1,0 +1,274 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Expense Input</title>
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    background:#f5f6fa;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+    margin:0;
+}
+
+.container{
+    background:white;
+    padding:25px;
+    border-radius:10px;
+    box-shadow:0 10px 20px rgba(0,0,0,0.08);
+    width:100%;
+    max-width:420px;
+}
+
+h2{
+    margin-top:0;
+    text-align:center;
+}
+
+label{
+    font-size:14px;
+    font-weight:600;
+}
+
+input,select{
+    width:100%;
+    padding:10px;
+    margin-top:5px;
+    margin-bottom:15px;
+    border-radius:6px;
+    border:1px solid #ddd;
+    font-size:14px;
+}
+
+button{
+    width:100%;
+    padding:12px;
+    border:none;
+    background:#4CAF50;
+    color:white;
+    font-size:16px;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+button:disabled{
+    background:#9e9e9e;
+}
+
+.spinner{
+    width:20px;
+    height:20px;
+    border:3px solid rgba(255,255,255,0.3);
+    border-top-color:#ffffff;
+    border-radius:50%;
+    animation:spin 0.8s linear infinite;
+    display:inline-block;
+    vertical-align:middle;
+    margin-left:8px;
+}
+
+.hidden{
+    display:none !important;
+}
+
+.message{
+    text-align:center;
+    margin-top:10px;
+    font-size:14px;
+}
+
+.message.success{color:#2e7d32;}
+.message.error{color:#c62828;}
+
+@keyframes spin{
+    to{transform:rotate(360deg);}
+}
+
+.quick-buttons{
+    display:flex;
+    gap:8px;
+    margin-bottom:15px;
+}
+
+.quick-buttons button{
+    flex:1;
+    background:#eee;
+    color:#333;
+    font-size:13px;
+}
+
+.message{
+    text-align:center;
+    margin-top:10px;
+    font-size:14px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+<h2>Add Expense</h2>
+
+<form id="expenseForm">
+
+<label>Date</label>
+<input type="date" id="date" required>
+
+<label>Category</label>
+<select id="category" required>
+<option value="">Select Category</option>
+<option>Mother</option>
+<option>JajanBulanan</option>
+<option>Subscribe</option>
+<option>Bensin Motor</option>
+<option>Bensin Mobil</option>
+<option>Transport / Emoney</option>
+<option>TakTerduga</option>
+<option>HariBesar</option>
+<option>Mobil</option>
+</select>
+
+<label>Description</label>
+<input type="text" id="description" placeholder="Example: Mie Ayam">
+
+<label>Amount</label>
+<input type="text" id="amount" placeholder="50000" required>
+
+<div class="quick-buttons">
+<button type="button" onclick="setAmount(50000)">50k</button>
+<button type="button" onclick="setAmount(100000)">100k</button>
+<button type="button" onclick="setAmount(200000)">200k</button>
+<button type="button" onclick="setAmount(500000)">500k</button>
+</div>
+
+<button type="submit" id="submitBtn">Save Expense</button>
+<span id="spinner" class="spinner hidden" aria-hidden="true"></span>
+
+<div class="message" id="message"></div>
+<button type="button" id="retryBtn" class="hidden" style="margin-top:8px;padding:10px;border:none;border-radius:6px;background:#f44336;color:#fff;cursor:pointer;">Retry</button>
+
+</form>
+</div>
+
+<script>
+
+const form = document.getElementById("expenseForm")
+const message = document.getElementById("message")
+const submitBtn = document.getElementById("submitBtn")
+const retryBtn = document.getElementById("retryBtn")
+const spinner = document.getElementById("spinner")
+
+let lastPayload = null
+
+function setLoading(isLoading){
+    submitBtn.disabled = isLoading
+    retryBtn.classList.add("hidden")
+    spinner.classList.toggle("hidden", !isLoading)
+    submitBtn.innerText = isLoading ? "Saving..." : "Save Expense"
+    document.querySelectorAll("input, select").forEach(el => el.disabled = isLoading)
+}
+
+function showMessage(text, type){
+    message.innerText = text
+    message.classList.remove("error", "success")
+    if(type) message.classList.add(type)
+}
+
+// set today's date
+document.getElementById("date").value = new Date().toISOString().split("T")[0]
+
+// quick buttons
+function setAmount(value){
+    document.getElementById("amount").value = new Intl.NumberFormat('id-ID').format(value)
+}
+
+// rupiah format while typing
+const amountInput = document.getElementById("amount")
+
+amountInput.addEventListener("input", function(e){
+    let value = e.target.value.replace(/\D/g,'')
+    if(value === "") return
+    e.target.value = new Intl.NumberFormat('id-ID').format(value)
+})
+
+// retry handler
+retryBtn.addEventListener("click", function(){
+    if(lastPayload){
+        submitForm(lastPayload)
+    }
+})
+
+const DEPLOY_URL = "https://script.google.com/macros/s/AKfycbyPkbQ8pPx9hFr6li3tPntz90Wjfs3RkOg1_EybwnXHRNwIxSEB7XseJoVpLqXFULmw-Q/exec"
+
+async function submitForm(payload){
+    setLoading(true)
+    showMessage("", "")
+
+    const formData = new FormData()
+    Object.entries(payload).forEach(([key, value]) => formData.append(key, value))
+
+    try {
+        const response = await fetch(DEPLOY_URL, {
+            method: "POST",
+            body: formData
+        })
+
+        const text = await response.text()
+        if(response.ok){
+            form.reset()
+            document.getElementById("date").value = new Date().toISOString().split("T")[0]
+            showMessage("Expense saved successfully", "success")
+            lastPayload = null
+        } else {
+            showMessage(`Failed to save expense (${response.status}): ${text}`, "error")
+            retryBtn.classList.remove("hidden")
+        }
+    } catch (err) {
+        console.error(err)
+        showMessage(`Error sending data: ${err.message || err}`, "error")
+        retryBtn.classList.remove("hidden")
+    } finally {
+        setLoading(false)
+    }
+}
+
+form.addEventListener("submit", function(e){
+    e.preventDefault()
+
+    const amountRaw = amountInput.value.replace(/\D/g, "")
+    const category = document.getElementById("category").value.trim()
+    const description = document.getElementById("description").value.trim()
+    const date = document.getElementById("date").value
+
+    if(!date || !category || !description || !amountRaw){
+        showMessage("Please fill all required fields before submitting.", "error")
+        return
+    }
+
+    const amountNumber = Number(amountRaw)
+    if(isNaN(amountNumber) || amountNumber <= 0){
+        showMessage("Amount must be a number greater than 0.", "error")
+        return
+    }
+    if(amountNumber > 100000000){
+        showMessage("Amount too large, use max 100.000.000.", "error")
+        return
+    }
+
+    const payload = {date, category, description, amount: amountNumber}
+    lastPayload = payload
+    submitForm(payload)
+})
+
+
+</script>
+
+</body>
+</html>
